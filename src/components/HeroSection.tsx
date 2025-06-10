@@ -1,10 +1,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import Navigation from "./Navigation";
 
 const HeroSection = () => {
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      {/* Navigation */}
+      <Navigation />
+      
       {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
