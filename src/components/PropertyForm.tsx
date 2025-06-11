@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { supabase } from '@/integrations/supabase/client'
@@ -166,7 +165,7 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
                 placeholder="Beautiful Family Home"
               />
               {errors.title && (
-                <p className="text-sm text-red-600">{errors.title.message}</p>
+                <p className="text-sm text-red-600">{String(errors.title.message)}</p>
               )}
             </div>
 
@@ -195,7 +194,7 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
                 placeholder="850000"
               />
               {errors.price && (
-                <p className="text-sm text-red-600">{errors.price.message}</p>
+                <p className="text-sm text-red-600">{String(errors.price.message)}</p>
               )}
             </div>
 
