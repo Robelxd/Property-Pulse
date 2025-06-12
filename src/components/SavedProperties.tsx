@@ -76,15 +76,8 @@ const SavedProperties = () => {
 
       if (error) throw error
 
-      // Map the data to match our interface structure
-      const mappedData = data?.map(item => ({
-        id: item.id,
-        property_id: item.property_id,
-        created_at: item.created_at,
-        properties: Array.isArray(item.properties) ? item.properties[0] : item.properties
-      })) || []
-
-      setSavedProperties(mappedData)
+      console.log('Fetched saved properties data:', data)
+      setSavedProperties(data || [])
     } catch (error: any) {
       console.error('Error fetching saved properties:', error)
       toast({
