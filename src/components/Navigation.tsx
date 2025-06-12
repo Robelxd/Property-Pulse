@@ -3,7 +3,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/AuthContext'
-import { LogOut, User, Home, Building } from 'lucide-react'
+import { LogOut, User, Home, Building, LayoutDashboard } from 'lucide-react'
 
 const Navigation = () => {
   const { user, signOut } = useAuth()
@@ -30,6 +30,15 @@ const Navigation = () => {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-white/10 border-white text-white hover:bg-white hover:text-black"
+                >
+                  <LayoutDashboard className="h-4 w-4 mr-2" />
+                  Dashboard
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
