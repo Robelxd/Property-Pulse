@@ -2,33 +2,35 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useToast } from '@/hooks/use-toast'
 import { Heart, MapPin, Bed, Bath, Square, Trash2 } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+
+interface Property {
+  id: string
+  title: string
+  price: number
+  property_type: string
+  bedrooms: number
+  bathrooms: number
+  square_feet: number
+  address: string
+  city: string
+  state: string
+  status: string
+  property_images: {
+    image_url: string
+    is_primary: boolean
+  }[]
+}
 
 interface SavedProperty {
   id: string
   property_id: string
   created_at: string
-  properties: {
-    id: string
-    title: string
-    price: number
-    property_type: string
-    bedrooms: number
-    bathrooms: number
-    square_feet: number
-    address: string
-    city: string
-    state: string
-    status: string
-    property_images: Array<{
-      image_url: string
-      is_primary: boolean
-    }>
-  }
+  properties: Property
 }
 
 const SavedProperties = () => {
@@ -39,11 +41,11 @@ const SavedProperties = () => {
 
   useEffect(() => {
     if (user) {
-      loadSavedProperties()
+      fetchSavedProperties()
     }
   }, [user])
 
-  const loadSavedProperties = async () => {
+  const fetchSavedProperties = async () => {
     try {
       const { data, error } = await supabase
         .from('saved_properties')
@@ -51,7 +53,7 @@ const SavedProperties = () => {
           id,
           property_id,
           created_at,
-          properties:property_id (
+          properties (
             id,
             title,
             price,
@@ -74,11 +76,20 @@ const SavedProperties = () => {
 
       if (error) throw error
 
-      setSavedProperties(data || [])
+      // Map the data to match our interface structure
+      const mappedData = data?.map(item => ({
+        id: item.id,
+        property_id: item.property_id,
+        created_at: item.created_at,
+        properties: Array.isArray(item.properties) ? item.properties[0] : item.properties
+      })) || []
+
+      setSavedProperties(mappedData)
     } catch (error: any) {
+      console.error('Error fetching saved properties:', error)
       toast({
-        title: 'Error loading saved properties',
-        description: error.message,
+        title: 'Error',
+        description: 'Failed to load saved properties',
         variant: 'destructive'
       })
     } finally {
@@ -92,6 +103,7 @@ const SavedProperties = () => {
         .from('saved_properties')
         .delete()
         .eq('id', savedPropertyId)
+        .eq('user_id', user?.id)
 
       if (error) throw error
 
@@ -100,13 +112,14 @@ const SavedProperties = () => {
       )
 
       toast({
-        title: 'Property removed',
-        description: 'The property has been removed from your saved list.'
+        title: 'Success',
+        description: 'Property removed from favorites'
       })
     } catch (error: any) {
+      console.error('Error removing saved property:', error)
       toast({
-        title: 'Error removing property',
-        description: error.message,
+        title: 'Error',
+        description: 'Failed to remove property from favorites',
         variant: 'destructive'
       })
     }
@@ -121,16 +134,24 @@ const SavedProperties = () => {
     }).format(price)
   }
 
-  const getPrimaryImage = (images: Array<{ image_url: string; is_primary: boolean }>) => {
-    const primaryImage = images.find(img => img.is_primary)
-    return primaryImage?.image_url || images[0]?.image_url || '/placeholder.svg'
+  const getPrimaryImage = (images: Property['property_images']) => {
+    const primaryImage = images?.find(img => img.is_primary)
+    return primaryImage?.image_url || images?.[0]?.image_url || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop'
   }
 
   if (loading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Heart className="h-5 w-5" />
+            Saved Properties
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
         </CardContent>
       </Card>
     )
@@ -144,103 +165,97 @@ const SavedProperties = () => {
             <Heart className="h-5 w-5" />
             Saved Properties
           </CardTitle>
-          <CardDescription>
-            Properties you've saved for later viewing.
-          </CardDescription>
         </CardHeader>
-        <CardContent className="text-center py-12">
-          <Heart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No saved properties</h3>
-          <p className="text-gray-600">
-            Start exploring properties and save your favorites to view them here.
-          </p>
+        <CardContent>
+          <div className="text-center py-8">
+            <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No saved properties yet</h3>
+            <p className="text-muted-foreground">
+              Start browsing properties and save your favorites to see them here.
+            </p>
+          </div>
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5" />
-            Saved Properties ({savedProperties.length})
-          </CardTitle>
-          <CardDescription>
-            Properties you've saved for later viewing.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Heart className="h-5 w-5" />
+          Saved Properties ({savedProperties.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {savedProperties.map((savedProperty) => {
+            const property = savedProperty.properties
+            if (!property) return null
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {savedProperties.map((saved) => (
-          <Card key={saved.id} className="group hover:shadow-lg transition-shadow">
-            <div className="relative">
-              <img
-                src={getPrimaryImage(saved.properties.property_images)}
-                alt={saved.properties.title}
-                className="w-full h-48 object-cover rounded-t-lg"
-              />
-              <Badge 
-                className="absolute top-2 left-2 bg-white text-gray-900"
-              >
-                {saved.properties.property_type}
-              </Badge>
-              <Button
-                size="sm"
-                variant="destructive"
-                className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => removeSavedProperty(saved.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <CardContent className="p-4">
-              <div className="mb-3">
-                <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">
-                  {saved.properties.title}
-                </h3>
-                <p className="text-2xl font-bold text-blue-600">
-                  {formatPrice(saved.properties.price)}
-                </p>
-              </div>
-
-              <div className="flex items-center text-gray-600 text-sm mb-3">
-                <MapPin className="h-4 w-4 mr-1" />
-                <span className="line-clamp-1">
-                  {saved.properties.address}, {saved.properties.city}, {saved.properties.state}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-4 text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <Bed className="h-4 w-4" />
-                  <span>{saved.properties.bedrooms}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Bath className="h-4 w-4" />
-                  <span>{saved.properties.bathrooms}</span>
-                </div>
-                {saved.properties.square_feet && (
-                  <div className="flex items-center gap-1">
-                    <Square className="h-4 w-4" />
-                    <span>{saved.properties.square_feet.toLocaleString()} sq ft</span>
+            return (
+              <Card key={savedProperty.id} className="group overflow-hidden hover:shadow-lg transition-all duration-300">
+                <div className="relative">
+                  <img
+                    src={getPrimaryImage(property.property_images)}
+                    alt={property.title}
+                    className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute top-2 left-2">
+                    <Badge variant="secondary" className="bg-white/90 text-black">
+                      {property.property_type}
+                    </Badge>
                   </div>
-                )}
-              </div>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="absolute top-2 right-2 h-8 w-8 p-0"
+                    onClick={() => removeSavedProperty(savedProperty.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+                    {property.title}
+                  </h3>
+                  
+                  <div className="flex items-center text-muted-foreground mb-3">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    <span className="text-sm">{property.address}, {property.city}, {property.state}</span>
+                  </div>
 
-              <div className="mt-3 pt-3 border-t">
-                <p className="text-xs text-gray-500">
-                  Saved on {new Date(saved.created_at).toLocaleDateString()}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-2xl font-bold text-blue-600">
+                      {formatPrice(property.price)}
+                    </span>
+                    <Badge variant={property.status === 'active' ? 'default' : 'secondary'}>
+                      {property.status}
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center">
+                      <Bed className="h-4 w-4 mr-1" />
+                      <span>{property.bedrooms} bed</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Bath className="h-4 w-4 mr-1" />
+                      <span>{property.bathrooms} bath</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Square className="h-4 w-4 mr-1" />
+                      <span>{property.square_feet?.toLocaleString()} sq ft</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
