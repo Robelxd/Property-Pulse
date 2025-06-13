@@ -30,7 +30,7 @@ interface SavedProperty {
   id: string
   property_id: string
   created_at: string
-  properties: Property
+  properties: Property | Property[] | null
 }
 
 const SavedProperties = () => {
@@ -132,6 +132,12 @@ const SavedProperties = () => {
     return primaryImage?.image_url || images?.[0]?.image_url || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop'
   }
 
+  const getPropertyData = (properties: Property | Property[] | null): Property | null => {
+    if (!properties) return null
+    if (Array.isArray(properties)) return properties[0] || null
+    return properties
+  }
+
   if (loading) {
     return (
       <Card>
@@ -183,7 +189,7 @@ const SavedProperties = () => {
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {savedProperties.map((savedProperty) => {
-            const property = savedProperty.properties
+            const property = getPropertyData(savedProperty.properties)
             if (!property) return null
 
             return (
