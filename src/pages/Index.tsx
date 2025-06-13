@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Search, MapPin, Home, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,9 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import PropertyCard from "@/components/PropertyCard";
 import HeroSection from "@/components/HeroSection";
 import SearchFilters from "@/components/SearchFilters";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   // Sample property data
   const featuredProperties = [
@@ -108,11 +109,20 @@ const Index = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {featuredProperties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
+              <div 
+                key={property.id}
+                onClick={() => navigate(`/property/${property.id}`)}
+              >
+                <PropertyCard property={property} />
+              </div>
             ))}
           </div>
           <div className="text-center mt-12">
-            <Button size="lg" className="px-8">
+            <Button 
+              size="lg" 
+              className="px-8"
+              onClick={() => navigate('/all-properties')}
+            >
               View All Properties
             </Button>
           </div>
