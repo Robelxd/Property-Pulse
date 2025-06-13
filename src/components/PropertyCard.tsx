@@ -2,6 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Property {
   id: number;
@@ -20,6 +21,8 @@ interface PropertyCardProps {
 }
 
 const PropertyCard = ({ property }: PropertyCardProps) => {
+  const navigate = useNavigate();
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -29,8 +32,15 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
     }).format(price);
   };
 
+  const handleClick = () => {
+    navigate(`/property/${property.id}`);
+  };
+
   return (
-    <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer">
+    <Card 
+      className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer"
+      onClick={handleClick}
+    >
       <div className="relative overflow-hidden">
         <img
           src={property.image}

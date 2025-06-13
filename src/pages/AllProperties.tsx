@@ -34,7 +34,7 @@ const AllProperties = () => {
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [propertyType, setPropertyType] = useState('')
+  const [propertyType, setPropertyType] = useState('all')
   const [sortBy, setSortBy] = useState('created_at')
 
   useEffect(() => {
@@ -112,7 +112,7 @@ const AllProperties = () => {
         query = query.or(`title.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,state.ilike.%${searchTerm}%`)
       }
 
-      if (propertyType) {
+      if (propertyType && propertyType !== 'all') {
         query = query.eq('property_type', propertyType)
       }
 
@@ -182,7 +182,7 @@ const AllProperties = () => {
                     <SelectValue placeholder="Property Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="house">House</SelectItem>
                     <SelectItem value="condo">Condo</SelectItem>
                     <SelectItem value="apartment">Apartment</SelectItem>

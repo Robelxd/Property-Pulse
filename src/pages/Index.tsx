@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Search, MapPin, Home, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -109,12 +110,7 @@ const Index = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {featuredProperties.map((property) => (
-              <div 
-                key={property.id}
-                onClick={() => navigate(`/property/${property.id}`)}
-              >
-                <PropertyCard property={property} />
-              </div>
+              <PropertyCard key={property.id} property={property} />
             ))}
           </div>
           <div className="text-center mt-12">
