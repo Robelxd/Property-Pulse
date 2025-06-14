@@ -103,17 +103,17 @@ const AllProperties = () => {
         .eq('status', 'active')
 
       // Apply location filter
-      if (currentFilters.location) {
+      if (currentFilters.location && currentFilters.location !== 'any') {
         query = query.or(`title.ilike.%${currentFilters.location}%,city.ilike.%${currentFilters.location}%,state.ilike.%${currentFilters.location}%`)
       }
 
       // Apply property type filter
-      if (currentFilters.propertyType) {
+      if (currentFilters.propertyType && currentFilters.propertyType !== 'any') {
         query = query.eq('property_type', currentFilters.propertyType)
       }
 
       // Apply price range filter
-      if (currentFilters.priceRange) {
+      if (currentFilters.priceRange && currentFilters.priceRange !== 'any') {
         const [minStr, maxStr] = currentFilters.priceRange.split('-')
         const min = parseInt(minStr, 10)
         const max = maxStr ? parseInt(maxStr, 10) : null
@@ -129,7 +129,7 @@ const AllProperties = () => {
       }
 
       // Apply bedrooms filter
-      if (currentFilters.bedrooms) {
+      if (currentFilters.bedrooms && currentFilters.bedrooms !== 'any') {
         const minBedrooms = parseInt(currentFilters.bedrooms)
         if (!isNaN(minBedrooms)) {
           query = query.gte('bedrooms', minBedrooms)

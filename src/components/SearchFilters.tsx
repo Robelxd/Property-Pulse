@@ -37,9 +37,9 @@ const SearchFilters = ({ onSearch, initialFilters }: SearchFiltersProps) => {
   const handleSearch = () => {
     const searchParams = {
       location,
-      propertyType,
-      priceRange,
-      bedrooms
+      propertyType: propertyType === "any" ? "" : propertyType,
+      priceRange: priceRange === "any" ? "" : priceRange,
+      bedrooms: bedrooms === "any" ? "" : bedrooms
     };
     onSearch(JSON.stringify(searchParams));
     console.log("Search params:", searchParams);
@@ -58,12 +58,12 @@ const SearchFilters = ({ onSearch, initialFilters }: SearchFiltersProps) => {
             />
           </div>
           
-          <Select value={propertyType} onValueChange={setPropertyType}>
+          <Select value={propertyType || "any"} onValueChange={setPropertyType}>
             <SelectTrigger className="h-12">
               <SelectValue placeholder="Property Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Type</SelectItem>
+              <SelectItem value="any">Any Type</SelectItem>
               <SelectItem value="house">House</SelectItem>
               <SelectItem value="condo">Condo</SelectItem>
               <SelectItem value="apartment">Apartment</SelectItem>
@@ -72,12 +72,12 @@ const SearchFilters = ({ onSearch, initialFilters }: SearchFiltersProps) => {
             </SelectContent>
           </Select>
 
-          <Select value={priceRange} onValueChange={setPriceRange}>
+          <Select value={priceRange || "any"} onValueChange={setPriceRange}>
             <SelectTrigger className="h-12">
               <SelectValue placeholder="Price Range" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Price</SelectItem>
+              <SelectItem value="any">Any Price</SelectItem>
               <SelectItem value="0-500000">Under $500K</SelectItem>
               <SelectItem value="500000-1000000">$500K - $1M</SelectItem>
               <SelectItem value="1000000-2000000">$1M - $2M</SelectItem>
@@ -86,12 +86,12 @@ const SearchFilters = ({ onSearch, initialFilters }: SearchFiltersProps) => {
             </SelectContent>
           </Select>
 
-          <Select value={bedrooms} onValueChange={setBedrooms}>
+          <Select value={bedrooms || "any"} onValueChange={setBedrooms}>
             <SelectTrigger className="h-12">
               <SelectValue placeholder="Bedrooms" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Beds</SelectItem>
+              <SelectItem value="any">Any Beds</SelectItem>
               <SelectItem value="1">1+ Bed</SelectItem>
               <SelectItem value="2">2+ Beds</SelectItem>
               <SelectItem value="3">3+ Beds</SelectItem>
@@ -117,4 +117,3 @@ const SearchFilters = ({ onSearch, initialFilters }: SearchFiltersProps) => {
 };
 
 export default SearchFilters;
-
