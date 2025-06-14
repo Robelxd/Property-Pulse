@@ -11,22 +11,28 @@ import { useToast } from '@/hooks/use-toast'
 import Navigation from '@/components/Navigation'
 
 interface Property {
-  id: string
+  id: string | number
   title: string
-  description: string
+  description?: string
   price: number
-  property_type: string
-  address: string
-  city: string
-  state: string
-  zip_code: string
-  bedrooms: number
-  bathrooms: number
-  square_feet: number
-  status: string
+  property_type?: string
+  type?: string
+  address?: string
+  location?: string
+  city?: string
+  state?: string
+  zip_code?: string
+  bedrooms?: number
+  beds?: number
+  bathrooms?: number
+  baths?: number
+  square_feet?: number
+  sqft?: number
+  status?: string
   featured: boolean
-  user_id: string
-  property_images: Array<{
+  user_id?: string
+  image?: string
+  property_images?: Array<{
     image_url: string
     is_primary: boolean
     caption?: string
@@ -42,6 +48,62 @@ const PropertyDetail = () => {
   const [loading, setLoading] = useState(true)
   const [isSaved, setIsSaved] = useState(false)
 
+  // Sample properties data (same as in Index.tsx)
+  const sampleProperties = [
+    {
+      id: 1,
+      title: "Modern Downtown Condo",
+      price: 850000,
+      location: "Downtown, San Francisco",
+      beds: 2,
+      baths: 2,
+      sqft: 1200,
+      image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      type: "Condo",
+      featured: true,
+      description: "Beautiful modern condo in the heart of downtown San Francisco with stunning city views and premium amenities."
+    },
+    {
+      id: 2,
+      title: "Luxury Family Home",
+      price: 1250000,
+      location: "Suburb Hills, CA",
+      beds: 4,
+      baths: 3,
+      sqft: 2800,
+      image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      type: "House",
+      featured: true,
+      description: "Spacious luxury family home with a large backyard, perfect for families looking for comfort and elegance."
+    },
+    {
+      id: 3,
+      title: "Waterfront Villa",
+      price: 2100000,
+      location: "Marina District, CA",
+      beds: 5,
+      baths: 4,
+      sqft: 3500,
+      image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      type: "Villa",
+      featured: true,
+      description: "Stunning waterfront villa with panoramic ocean views and private beach access."
+    },
+    {
+      id: 4,
+      title: "Cozy Starter Home",
+      price: 650000,
+      location: "Oak Valley, CA",
+      beds: 3,
+      baths: 2,
+      sqft: 1600,
+      image: "https://images.unsplash.com/photo-1502005229762-cf1b2da27a38?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      type: "House",
+      featured: false,
+      description: "Perfect starter home in a quiet neighborhood with great schools and community amenities."
+    }
+  ];
+
   useEffect(() => {
     if (id) {
       loadProperty()
@@ -53,6 +115,18 @@ const PropertyDetail = () => {
 
   const loadProperty = async () => {
     try {
+      // First check if it's a sample property (numeric ID)
+      const numericId = parseInt(id || '');
+      if (!isNaN(numericId)) {
+        const sampleProperty = sampleProperties.find(p => p.id === numericId);
+        if (sampleProperty) {
+          setProperty(sampleProperty);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // If not found in samples, try to fetch from database
       const { data, error } = await supabase
         .from('properties')
         .select(`
@@ -70,7 +144,7 @@ const PropertyDetail = () => {
         description: error.message,
         variant: 'destructive'
       })
-      navigate('/properties')
+      navigate('/all-properties')
     } finally {
       setLoading(false)
     }
@@ -149,11 +223,38 @@ const PropertyDetail = () => {
   }
 
   const getPrimaryImage = () => {
+    if (property?.image) {
+      return property.image;
+    }
     if (!property?.property_images?.length) {
       return 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&h=600&fit=crop'
     }
     const primary = property.property_images.find(img => img.is_primary)
     return primary?.image_url || property.property_images[0]?.image_url
+  }
+
+  const getPropertyType = () => {
+    return property?.property_type || property?.type || 'Property';
+  }
+
+  const getLocation = () => {
+    if (property?.location) return property.location;
+    if (property?.address) {
+      return `${property.address}, ${property.city}, ${property.state} ${property.zip_code}`;
+    }
+    return 'Location not specified';
+  }
+
+  const getBedrooms = () => {
+    return property?.bedrooms || property?.beds || 0;
+  }
+
+  const getBathrooms = () => {
+    return property?.bathrooms || property?.baths || 0;
+  }
+
+  const getSquareFeet = () => {
+    return property?.square_feet || property?.sqft || 0;
   }
 
   if (loading) {
@@ -179,7 +280,7 @@ const PropertyDetail = () => {
             <CardContent className="text-center py-12">
               <h3 className="text-lg font-semibold mb-2">Property not found</h3>
               <p className="text-muted-foreground mb-4">The property you're looking for doesn't exist.</p>
-              <Button onClick={() => navigate('/properties')}>
+              <Button onClick={() => navigate('/all-properties')}>
                 View All Properties
               </Button>
             </CardContent>
@@ -250,7 +351,7 @@ const PropertyDetail = () => {
                   <h1 className="text-2xl font-bold mb-2">{property.title}</h1>
                   <div className="flex items-center text-muted-foreground mb-2">
                     <MapPin className="h-4 w-4 mr-1" />
-                    <span>{property.address}, {property.city}, {property.state} {property.zip_code}</span>
+                    <span>{getLocation()}</span>
                   </div>
                   <div className="text-3xl font-bold text-blue-600 mb-4">
                     {formatPrice(property.price)}
@@ -262,28 +363,28 @@ const PropertyDetail = () => {
                     <div className="flex items-center justify-center mb-1">
                       <Bed className="h-4 w-4 mr-1" />
                     </div>
-                    <div className="font-semibold">{property.bedrooms}</div>
+                    <div className="font-semibold">{getBedrooms()}</div>
                     <div className="text-sm text-muted-foreground">Beds</div>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center mb-1">
                       <Bath className="h-4 w-4 mr-1" />
                     </div>
-                    <div className="font-semibold">{property.bathrooms}</div>
+                    <div className="font-semibold">{getBathrooms()}</div>
                     <div className="text-sm text-muted-foreground">Baths</div>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center mb-1">
                       <Home className="h-4 w-4 mr-1" />
                     </div>
-                    <div className="font-semibold">{property.square_feet?.toLocaleString()}</div>
+                    <div className="font-semibold">{getSquareFeet()?.toLocaleString()}</div>
                     <div className="text-sm text-muted-foreground">Sq Ft</div>
                   </div>
                 </div>
 
                 <div className="mb-6">
                   <h3 className="font-semibold mb-2">Property Type</h3>
-                  <Badge variant="outline">{property.property_type}</Badge>
+                  <Badge variant="outline">{getPropertyType()}</Badge>
                 </div>
 
                 <div className="space-y-2">
