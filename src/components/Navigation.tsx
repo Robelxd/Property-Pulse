@@ -37,16 +37,6 @@ const Navigation = () => {
             >
               PropertyPulse
             </h1>
-            
-            {/* Add navigation links */}
-            <div className="hidden md:flex items-center space-x-6">
-              <button
-                onClick={() => navigate('/all-properties')}
-                className="text-gray-700 hover:text-blue-600 transition-colors"
-              >
-                Properties
-              </button>
-            </div>
           </div>
           
           <div className="flex items-center space-x-4">

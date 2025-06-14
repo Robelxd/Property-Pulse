@@ -2,14 +2,14 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Search, MapPin, Bed, Bath, Home } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Home } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '@/components/Navigation'
+import SearchFilters from '@/components/SearchFilters'
 
 interface Property {
   id: string
@@ -33,9 +33,13 @@ const AllProperties = () => {
   const navigate = useNavigate()
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [propertyType, setPropertyType] = useState('all')
   const [sortBy, setSortBy] = useState('created_at')
+  const [filters, setFilters] = useState({
+    location: '',
+    propertyType: '',
+    priceRange: '',
+    bedrooms: ''
+  })
 
   useEffect(() => {
     loadProperties()
@@ -84,11 +88,17 @@ const AllProperties = () => {
     }
   }
 
-  const handleSearch = () => {
-    loadFilteredProperties()
+  const handleSearch = (searchParams: string) => {
+    try {
+      const parsedFilters = JSON.parse(searchParams)
+      setFilters(parsedFilters)
+      loadFilteredProperties(parsedFilters)
+    } catch (error) {
+      console.error('Error parsing search params:', error)
+    }
   }
 
-  const loadFilteredProperties = async () => {
+  const loadFilteredProperties = async (searchFilters = filters) => {
     setLoading(true)
     try {
       let query = supabase
@@ -108,12 +118,30 @@ const AllProperties = () => {
         `)
         .eq('status', 'active')
 
-      if (searchTerm) {
-        query = query.or(`title.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,state.ilike.%${searchTerm}%`)
+      // Apply location filter
+      if (searchFilters.location) {
+        query = query.or(`title.ilike.%${searchFilters.location}%,city.ilike.%${searchFilters.location}%,state.ilike.%${searchFilters.location}%`)
       }
 
-      if (propertyType && propertyType !== 'all') {
-        query = query.eq('property_type', propertyType)
+      // Apply property type filter
+      if (searchFilters.propertyType) {
+        query = query.eq('property_type', searchFilters.propertyType)
+      }
+
+      // Apply price range filter
+      if (searchFilters.priceRange) {
+        const [min, max] = searchFilters.priceRange.split('-').map(Number)
+        if (max) {
+          query = query.gte('price', min).lte('price', max)
+        } else {
+          query = query.gte('price', min)
+        }
+      }
+
+      // Apply bedrooms filter
+      if (searchFilters.bedrooms) {
+        const minBedrooms = parseInt(searchFilters.bedrooms)
+        query = query.gte('bedrooms', minBedrooms)
       }
 
       // Apply sorting
@@ -164,35 +192,20 @@ const AllProperties = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-6">All Properties</h1>
           
-          {/* Search and Filters */}
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="md:col-span-2">
-                  <Input
-                    placeholder="Search by title, city, or state..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="h-10"
-                  />
-                </div>
-                
-                <Select value={propertyType} onValueChange={setPropertyType}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Property Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="house">House</SelectItem>
-                    <SelectItem value="condo">Condo</SelectItem>
-                    <SelectItem value="apartment">Apartment</SelectItem>
-                    <SelectItem value="villa">Villa</SelectItem>
-                    <SelectItem value="townhouse">Townhouse</SelectItem>
-                  </SelectContent>
-                </Select>
+          {/* Integrated Search Filters */}
+          <div className="mb-6">
+            <SearchFilters onSearch={handleSearch} />
+          </div>
 
+          {/* Sort Options */}
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  {properties.length} properties found
+                </span>
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger className="w-48">
                     <SelectValue placeholder="Sort By" />
                   </SelectTrigger>
                   <SelectContent>
@@ -201,13 +214,6 @@ const AllProperties = () => {
                     <SelectItem value="price_high">Price: High to Low</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              
-              <div className="mt-4">
-                <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700">
-                  <Search className="mr-2 h-4 w-4" />
-                  Search Properties
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -260,9 +266,8 @@ const AllProperties = () => {
                     <h3 className="text-lg font-semibold mb-2 group-hover:text-blue-600 transition-colors">
                       {property.title}
                     </h3>
-                    <div className="flex items-center text-muted-foreground mb-3">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      <span className="text-sm">{property.city}, {property.state}</span>
+                    <div className="text-sm text-muted-foreground mb-3">
+                      {property.city}, {property.state}
                     </div>
                   </div>
                   
