@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,13 +8,31 @@ import { Search } from "lucide-react";
 
 interface SearchFiltersProps {
   onSearch: (searchTerm: string) => void;
+  initialFilters?: {
+    location?: string;
+    propertyType?: string;
+    priceRange?: string;
+    bedrooms?: string;
+  };
 }
 
-const SearchFilters = ({ onSearch }: SearchFiltersProps) => {
-  const [location, setLocation] = useState("");
-  const [propertyType, setPropertyType] = useState("");
-  const [priceRange, setPriceRange] = useState("");
-  const [bedrooms, setBedrooms] = useState("");
+const SearchFilters = ({ onSearch, initialFilters }: SearchFiltersProps) => {
+  const [location, setLocation] = useState(initialFilters?.location || "");
+  const [propertyType, setPropertyType] = useState(initialFilters?.propertyType || "");
+  const [priceRange, setPriceRange] = useState(initialFilters?.priceRange || "");
+  const [bedrooms, setBedrooms] = useState(initialFilters?.bedrooms || "");
+
+  useEffect(() => {
+    if (initialFilters) {
+      setLocation(initialFilters.location || "");
+      setPropertyType(initialFilters.propertyType || "");
+      setPriceRange(initialFilters.priceRange || "");
+      setBedrooms(initialFilters.bedrooms || "");
+    }
+    // If initialFilters is not provided (e.g. on the homepage),
+    // we don't want to clear fields if they were already initialized by useState.
+    // If parent wants to explicitly clear, it should pass empty strings in initialFilters.
+  }, [initialFilters]);
 
   const handleSearch = () => {
     const searchParams = {
@@ -45,6 +63,7 @@ const SearchFilters = ({ onSearch }: SearchFiltersProps) => {
               <SelectValue placeholder="Property Type" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="">Any Type</SelectItem>
               <SelectItem value="house">House</SelectItem>
               <SelectItem value="condo">Condo</SelectItem>
               <SelectItem value="apartment">Apartment</SelectItem>
@@ -58,6 +77,7 @@ const SearchFilters = ({ onSearch }: SearchFiltersProps) => {
               <SelectValue placeholder="Price Range" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="">Any Price</SelectItem>
               <SelectItem value="0-500000">Under $500K</SelectItem>
               <SelectItem value="500000-1000000">$500K - $1M</SelectItem>
               <SelectItem value="1000000-2000000">$1M - $2M</SelectItem>
@@ -71,6 +91,7 @@ const SearchFilters = ({ onSearch }: SearchFiltersProps) => {
               <SelectValue placeholder="Bedrooms" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="">Any Beds</SelectItem>
               <SelectItem value="1">1+ Bed</SelectItem>
               <SelectItem value="2">2+ Beds</SelectItem>
               <SelectItem value="3">3+ Beds</SelectItem>
@@ -96,3 +117,4 @@ const SearchFilters = ({ onSearch }: SearchFiltersProps) => {
 };
 
 export default SearchFilters;
+

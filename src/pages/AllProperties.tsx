@@ -1,13 +1,12 @@
-
 import React, { useEffect, useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Home } from 'lucide-react'
+import { Home as HomeIcon } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation as useReactRouterLocation } from 'react-router-dom'
 import Navigation from '@/components/Navigation'
 import SearchFilters from '@/components/SearchFilters'
 
@@ -31,6 +30,8 @@ interface Property {
 const AllProperties = () => {
   const { toast } = useToast()
   const navigate = useNavigate()
+  const reactRouterLocation = useReactRouterLocation();
+
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState('created_at')
@@ -40,65 +41,48 @@ const AllProperties = () => {
     priceRange: '',
     bedrooms: ''
   })
+  const [initialFiltersApplied, setInitialFiltersApplied] = useState(false);
 
+  // Effect to parse filters from URL and update local filter state
   useEffect(() => {
-    loadProperties()
-  }, [sortBy])
-
-  const loadProperties = async () => {
-    try {
-      let query = supabase
-        .from('properties')
-        .select(`
-          id,
-          title,
-          price,
-          property_type,
-          city,
-          state,
-          bedrooms,
-          bathrooms,
-          square_feet,
-          featured,
-          property_images(image_url, is_primary)
-        `)
-        .eq('status', 'active')
-
-      // Apply sorting
-      if (sortBy === 'price_low') {
-        query = query.order('price', { ascending: true })
-      } else if (sortBy === 'price_high') {
-        query = query.order('price', { ascending: false })
-      } else {
-        query = query.order('created_at', { ascending: false })
+    const params = new URLSearchParams(reactRouterLocation.search);
+    const filtersFromUrlString = params.get('filters');
+    let resolvedFilters = { location: '', propertyType: '', priceRange: '', bedrooms: '' };
+  
+    if (filtersFromUrlString) {
+      try {
+        resolvedFilters = JSON.parse(decodeURIComponent(filtersFromUrlString));
+      } catch (e) {
+        console.error("Error parsing filters from URL", e);
+        // Keep resolvedFilters as default if parsing fails
       }
-
-      const { data, error } = await query
-
-      if (error) throw error
-      setProperties(data || [])
-    } catch (error: any) {
-      toast({
-        title: 'Error loading properties',
-        description: error.message,
-        variant: 'destructive'
-      })
-    } finally {
-      setLoading(false)
     }
-  }
+    setFilters(resolvedFilters);
+    setInitialFiltersApplied(true); // Signal that initial filter setup from URL (or default) is done
+  }, [reactRouterLocation.search]); // Re-run if URL search params change
 
-  const handleSearch = (searchParams: string) => {
+  // Effect to load properties when filters or sortBy change, after initial filters are set
+  useEffect(() => {
+    if (initialFiltersApplied) {
+      loadFilteredProperties(filters);
+    }
+  }, [filters, sortBy, initialFiltersApplied]);
+
+  const handleSearch = (searchParams: string) => { // This is for the SearchFilters within AllProperties page
     try {
       const parsedFilters = JSON.parse(searchParams)
-      setFilters(parsedFilters)
-      loadFilteredProperties(parsedFilters)
+      setFilters(parsedFilters) // This will trigger the useEffect above to reload properties
     } catch (error) {
       console.error('Error parsing search params:', error)
+      toast({
+        title: 'Filter Error',
+        description: 'Could not apply filters.',
+        variant: 'destructive',
+      });
     }
   }
 
-  const loadFilteredProperties = async (searchFilters = filters) => {
+  const loadFilteredProperties = async (currentFilters = filters) => {
     setLoading(true)
     try {
       let query = supabase
@@ -119,29 +103,37 @@ const AllProperties = () => {
         .eq('status', 'active')
 
       // Apply location filter
-      if (searchFilters.location) {
-        query = query.or(`title.ilike.%${searchFilters.location}%,city.ilike.%${searchFilters.location}%,state.ilike.%${searchFilters.location}%`)
+      if (currentFilters.location) {
+        query = query.or(`title.ilike.%${currentFilters.location}%,city.ilike.%${currentFilters.location}%,state.ilike.%${currentFilters.location}%`)
       }
 
       // Apply property type filter
-      if (searchFilters.propertyType) {
-        query = query.eq('property_type', searchFilters.propertyType)
+      if (currentFilters.propertyType) {
+        query = query.eq('property_type', currentFilters.propertyType)
       }
 
       // Apply price range filter
-      if (searchFilters.priceRange) {
-        const [min, max] = searchFilters.priceRange.split('-').map(Number)
-        if (max) {
-          query = query.gte('price', min).lte('price', max)
-        } else {
+      if (currentFilters.priceRange) {
+        const [minStr, maxStr] = currentFilters.priceRange.split('-')
+        const min = parseInt(minStr, 10)
+        const max = maxStr ? parseInt(maxStr, 10) : null
+
+        if (!isNaN(min)) {
           query = query.gte('price', min)
+        }
+        if (max !== null && !isNaN(max)) {
+          query = query.lte('price', max)
+        } else if (maxStr === undefined && !isNaN(min)) { // For ranges like "5000000+"
+           // This case is already handled by gte if max is null/undefined. No specific 'else' needed if it's just a minimum.
         }
       }
 
       // Apply bedrooms filter
-      if (searchFilters.bedrooms) {
-        const minBedrooms = parseInt(searchFilters.bedrooms)
-        query = query.gte('bedrooms', minBedrooms)
+      if (currentFilters.bedrooms) {
+        const minBedrooms = parseInt(currentFilters.bedrooms)
+        if (!isNaN(minBedrooms)) {
+          query = query.gte('bedrooms', minBedrooms)
+        }
       }
 
       // Apply sorting
@@ -163,6 +155,7 @@ const AllProperties = () => {
         description: error.message,
         variant: 'destructive'
       })
+      setProperties([]) // Clear properties on error
     } finally {
       setLoading(false)
     }
@@ -192,9 +185,9 @@ const AllProperties = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-6">All Properties</h1>
           
-          {/* Integrated Search Filters */}
           <div className="mb-6">
-            <SearchFilters onSearch={handleSearch} />
+            {/* Pass current filters to SearchFilters so it displays them */}
+            <SearchFilters onSearch={handleSearch} initialFilters={filters} />
           </div>
 
           {/* Sort Options */}
@@ -228,9 +221,9 @@ const AllProperties = () => {
         ) : properties.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
-              <Home className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <HomeIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-semibold mb-2">No properties found</h3>
-              <p className="text-muted-foreground">Try adjusting your search filters.</p>
+              <p className="text-muted-foreground">Try adjusting your search filters or check back later.</p>
             </CardContent>
           </Card>
         ) : (

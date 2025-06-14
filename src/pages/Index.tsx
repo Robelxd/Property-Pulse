@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Search, MapPin, Home, Users } from "lucide-react";
+import { Search, MapPin, Home as HomeIconLucide, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +9,6 @@ import SearchFilters from "@/components/SearchFilters";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
   // Sample property data
@@ -62,10 +60,14 @@ const Index = () => {
   ];
 
   const stats = [
-    { icon: Home, label: "Properties Sold", value: "2,500+" },
+    { icon: HomeIconLucide, label: "Properties Sold", value: "2,500+" },
     { icon: Users, label: "Happy Clients", value: "1,200+" },
     { icon: MapPin, label: "Cities Covered", value: "50+" }
   ];
+
+  const handleHomePageSearch = (searchParamsJSON: string) => {
+    navigate(`/all-properties?filters=${encodeURIComponent(searchParamsJSON)}`);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,7 +79,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-8">Find Your Dream Home</h2>
-            <SearchFilters onSearch={setSearchTerm} />
+            <SearchFilters onSearch={handleHomePageSearch} />
           </div>
         </div>
       </section>
