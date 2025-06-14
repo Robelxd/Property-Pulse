@@ -10,7 +10,8 @@ import {
   LogOut, 
   Menu, 
   X, 
-  Heart
+  Heart,
+  Calculator
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -33,6 +34,7 @@ const Navigation = () => {
   const navItems = [
     { name: 'Home', path: '/', icon: Home },
     { name: 'All Properties', path: '/all-properties', icon: Building },
+    { name: 'Tools', path: '/tools', icon: Calculator },
   ]
 
   const authenticatedNavItems = user ? [

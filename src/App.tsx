@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +12,7 @@ import AllProperties from "./pages/AllProperties";
 import PropertyDetail from "./pages/PropertyDetail";
 import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
+import Tools from "./pages/Tools";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +31,7 @@ const App = () => (
             <Route path="/all-properties" element={<AllProperties />} />
             <Route path="/property/:id" element={<PropertyDetail />} />
             <Route path="/favorites" element={<Favorites />} />
+            <Route path="/tools" element={<Tools />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
