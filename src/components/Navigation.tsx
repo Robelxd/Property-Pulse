@@ -38,7 +38,6 @@ const Navigation = () => {
   const authenticatedNavItems = user ? [
     ...navItems,
     { name: 'Favorites', path: '/favorites', icon: Heart },
-    { name: 'Dashboard', path: '/dashboard', icon: User },
   ] : navItems
 
   return (
@@ -71,8 +70,7 @@ const Navigation = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm">
-                    <User className="h-4 w-4 mr-1" />
-                    {user.email}
+                    <User className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
