@@ -6,12 +6,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import { 
   Home, 
   Building, 
-  Search, 
   User, 
   LogOut, 
   Menu, 
   X, 
-  Plus,
   Heart
 } from 'lucide-react'
 import {
@@ -35,7 +33,6 @@ const Navigation = () => {
   const navItems = [
     { name: 'Home', path: '/', icon: Home },
     { name: 'All Properties', path: '/all-properties', icon: Building },
-    { name: 'Search', path: '/properties', icon: Search },
   ]
 
   const authenticatedNavItems = user ? [
@@ -71,39 +68,29 @@ const Navigation = () => {
           {/* Desktop Auth Section */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
-              <>
-                <Button 
-                  onClick={() => navigate('/property-form')}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  List Property
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <User className="h-4 w-4 mr-1" />
-                      {user.email}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                      <User className="h-4 w-4 mr-2" />
-                      Dashboard
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/favorites')}>
-                      <Heart className="h-4 w-4 mr-2" />
-                      Favorites
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <User className="h-4 w-4 mr-1" />
+                    {user.email}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                    <User className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/favorites')}>
+                    <Heart className="h-4 w-4 mr-2" />
+                    Favorites
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Button 
                 onClick={() => navigate('/auth')}
@@ -144,31 +131,18 @@ const Navigation = () => {
               ))}
               
               {user ? (
-                <>
-                  <Button 
-                    onClick={() => {
-                      navigate('/property-form')
-                      setIsMobileMenuOpen(false)
-                    }}
-                    size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    List Property
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      handleSignOut()
-                      setIsMobileMenuOpen(false)
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                  >
-                    <LogOut className="h-4 w-4 mr-1" />
-                    Sign Out
-                  </Button>
-                </>
+                <Button 
+                  onClick={() => {
+                    handleSignOut()
+                    setIsMobileMenuOpen(false)
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  <LogOut className="h-4 w-4 mr-1" />
+                  Sign Out
+                </Button>
               ) : (
                 <Button 
                   onClick={() => {
