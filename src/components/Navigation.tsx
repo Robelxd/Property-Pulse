@@ -1,9 +1,19 @@
 
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/AuthContext'
-import { LogOut, User, Home, Building, LayoutDashboard } from 'lucide-react'
+import { 
+  Home, 
+  Building, 
+  Search, 
+  User, 
+  LogOut, 
+  Menu, 
+  X, 
+  Plus,
+  Heart
+} from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,91 +21,169 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 const Navigation = () => {
-  const { user, signOut } = useAuth()
   const navigate = useNavigate()
+  const { user, signOut } = useAuth()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
     navigate('/')
   }
 
-  const getInitials = (email: string) => {
-    return email.charAt(0).toUpperCase()
-  }
+  const navItems = [
+    { name: 'Home', path: '/', icon: Home },
+    { name: 'All Properties', path: '/all-properties', icon: Building },
+    { name: 'Search', path: '/properties', icon: Search },
+  ]
+
+  const authenticatedNavItems = user ? [
+    ...navItems,
+    { name: 'Favorites', path: '/favorites', icon: Heart },
+    { name: 'Dashboard', path: '/dashboard', icon: User },
+  ] : navItems
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="fixed top-0 left-0 right-0 bg-white shadow-md z-50">
+      <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-8">
-            <h1 
-              className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
-              onClick={() => navigate('/')}
-            >
-              PropertyPulse
-            </h1>
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-2">
+            <Building className="h-8 w-8 text-blue-600" />
+            <span className="text-xl font-bold text-gray-900">RealEstate</span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            {authenticatedNavItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                className="flex items-center space-x-1 text-gray-600 hover:text-blue-600 transition-colors"
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.name}</span>
+              </Link>
+            ))}
           </div>
-          
-          <div className="flex items-center space-x-4">
+
+          {/* Desktop Auth Section */}
+          <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
+                <Button 
+                  onClick={() => navigate('/property-form')}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  List Property
+                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-blue-600 text-white text-sm">
-                          {getInitials(user.email || 'U')}
-                        </AvatarFallback>
-                      </Avatar>
+                    <Button variant="ghost" size="sm">
+                      <User className="h-4 w-4 mr-1" />
+                      {user.email}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <div className="flex items-center justify-start gap-2 p-2">
-                      <div className="flex flex-col space-y-1 leading-none">
-                        <p className="font-medium text-sm">{user.email}</p>
-                      </div>
-                    </div>
-                    <DropdownMenuSeparator />
+                  <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
+                      <User className="h-4 w-4 mr-2" />
+                      Dashboard
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/properties')}>
-                      <Building className="mr-2 h-4 w-4" />
-                      <span>My Properties</span>
+                    <DropdownMenuItem onClick={() => navigate('/favorites')}>
+                      <Heart className="h-4 w-4 mr-2" />
+                      Favorites
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Sign Out</span>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
             ) : (
-              <div className="space-x-2">
-                <Button
-                  variant="outline"
+              <Button 
+                onClick={() => navigate('/auth')}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Sign In
+              </Button>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 py-4">
+            <div className="flex flex-col space-y-4">
+              {authenticatedNavItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.name}</span>
+                </Link>
+              ))}
+              
+              {user ? (
+                <>
+                  <Button 
+                    onClick={() => {
+                      navigate('/property-form')
+                      setIsMobileMenuOpen(false)
+                    }}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    List Property
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      handleSignOut()
+                      setIsMobileMenuOpen(false)
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                  >
+                    <LogOut className="h-4 w-4 mr-1" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <Button 
+                  onClick={() => {
+                    navigate('/auth')
+                    setIsMobileMenuOpen(false)
+                  }}
                   size="sm"
-                  onClick={() => navigate('/auth')}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="bg-blue-600 hover:bg-blue-700 w-full"
                 >
                   Sign In
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={() => navigate('/auth')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Get Started
-                </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </nav>
   )
