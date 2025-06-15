@@ -2,8 +2,22 @@
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import Navigation from "./Navigation";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
+  const handleStartSearch = () => {
+    navigate('/all-properties');
+  };
+
+  const handleLearnMore = () => {
+    const featuredSection = document.getElementById('featured-properties');
+    if (featuredSection) {
+      featuredSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Navigation */}
@@ -29,11 +43,20 @@ const HeroSection = () => {
           Discover premium properties in prime locations with our expert guidance and personalized service.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in">
-          <Button size="lg" className="px-8 py-4 text-lg bg-blue-600 hover:bg-blue-700">
+          <Button 
+            size="lg" 
+            className="px-8 py-4 text-lg bg-blue-600 hover:bg-blue-700"
+            onClick={handleStartSearch}
+          >
             <Search className="mr-2 h-5 w-5" />
             Start Your Search
           </Button>
-          <Button size="lg" variant="outline" className="px-8 py-4 text-lg bg-white/10 border-white text-white hover:bg-white hover:text-black">
+          <Button 
+            size="lg" 
+            variant="outline" 
+            className="px-8 py-4 text-lg bg-white/10 border-white text-white hover:bg-white hover:text-black"
+            onClick={handleLearnMore}
+          >
             Learn More
           </Button>
         </div>
