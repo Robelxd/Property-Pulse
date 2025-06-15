@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import PropertyCard from "@/components/PropertyCard";
 import HeroSection from "@/components/HeroSection";
 import SearchFilters from "@/components/SearchFilters";
+import Footer from "@/components/Footer";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
