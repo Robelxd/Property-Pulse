@@ -8,6 +8,7 @@ import PropertyCard from "@/components/PropertyCard";
 import HeroSection from "@/components/HeroSection";
 import SearchFilters from "@/components/SearchFilters";
 import Footer from "@/components/Footer";
+import Navigation from "@/components/Navigation";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -73,6 +74,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
+      
       {/* Hero Section */}
       <HeroSection />
 
@@ -157,6 +160,8 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 };
