@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, MapPin, Home as HomeIconLucide, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,57 +10,78 @@ import SearchFilters from "@/components/SearchFilters";
 import Footer from "@/components/Footer";
 import Navigation from "@/components/Navigation";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const Index = () => {
   const navigate = useNavigate();
 
-  // Sample property data
-  const featuredProperties = [
-    {
-      id: 1,
-      title: "Modern Downtown Condo",
-      price: 850000,
-      location: "Downtown, San Francisco",
-      beds: 2,
-      baths: 2,
-      sqft: 1200,
-      image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-      type: "Condo"
-    },
-    {
-      id: 2,
-      title: "Luxury Family Home",
-      price: 1250000,
-      location: "Suburb Hills, CA",
-      beds: 4,
-      baths: 3,
-      sqft: 2800,
-      image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-      type: "House"
-    },
-    {
-      id: 3,
-      title: "Waterfront Villa",
-      price: 2100000,
-      location: "Marina District, CA",
-      beds: 5,
-      baths: 4,
-      sqft: 3500,
-      image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-      type: "Villa"
-    },
-    {
-      id: 4,
-      title: "Cozy Starter Home",
-      price: 650000,
-      location: "Oak Valley, CA",
-      beds: 3,
-      baths: 2,
-      sqft: 1600,
-      image: "https://images.unsplash.com/photo-1502005229762-cf1b2da27a38?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-      type: "House"
+  // Fetch properties from database - get more than 4 to ensure we have enough
+  const { data: allProperties = [], isLoading } = useQuery({
+    queryKey: ['featured-properties'],
+    queryFn: async () => {
+      console.log('Fetching properties from database...');
+      
+      // First try to get featured properties
+      const { data: featuredData, error: featuredError } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          property_images (
+            image_url,
+            is_primary,
+            caption
+          )
+        `)
+        .eq('status', 'active')
+        .eq('featured', true)
+        .order('created_at', { ascending: false })
+        .limit(8);
+
+      if (featuredError) {
+        console.error('Error fetching featured properties:', featuredError);
+      }
+
+      // If we don't have enough featured properties, get regular active properties
+      if (!featuredData || featuredData.length < 4) {
+        console.log('Not enough featured properties, fetching regular properties...');
+        
+        const { data: regularData, error: regularError } = await supabase
+          .from('properties')
+          .select(`
+            *,
+            property_images (
+              image_url,
+              is_primary,
+              caption
+            )
+          `)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(8);
+
+        if (regularError) {
+          console.error('Error fetching properties:', regularError);
+          throw regularError;
+        }
+
+        // Combine featured and regular properties, prioritizing featured
+        const combined = [
+          ...(featuredData || []),
+          ...(regularData || []).filter(prop => !featuredData?.some(fp => fp.id === prop.id))
+        ];
+
+        console.log('Combined properties:', combined);
+        return combined || [];
+      }
+
+      console.log('Featured properties:', featuredData);
+      return featuredData || [];
     }
-  ];
+  });
+
+  // Always show exactly 4 properties
+  const featuredProperties = allProperties.slice(0, 4);
 
   const stats = [
     { icon: HomeIconLucide, label: "Properties Sold", value: "2,500+" },
@@ -106,35 +127,94 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Properties */}
-      <section id="featured-properties" className="py-16 bg-muted/30">
+      {/* Featured Properties - Fixed to show exactly 4 cards */}
+      <section id="featured-properties" className="py-20 bg-gradient-to-br from-background via-muted/20 to-muted/30">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Featured Properties</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-primary/80 to-foreground bg-clip-text text-transparent">
+              Featured Properties
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-primary to-primary/60 mx-auto mb-6 rounded-full"></div>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Discover our handpicked selection of premium properties that offer exceptional value and lifestyle.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {featuredProperties.map((property) => (
-              <PropertyCard 
-                key={property.id} 
-                id={property.id}
-                title={property.title}
-                price={property.price}
-                location={property.location}
-                beds={property.beds}
-                baths={property.baths}
-                sqft={property.sqft}
-                image={property.image}
-                type={property.type}
-              />
-            ))}
-          </div>
-          <div className="text-center mt-12">
+          
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+              {[...Array(4)].map((_, index) => (
+                <Card key={index} className="animate-pulse overflow-hidden">
+                  <div className="w-full h-64 bg-gradient-to-r from-muted via-muted-foreground/20 to-muted bg-[length:200%_100%] animate-[shimmer_2s_infinite]"></div>
+                  <CardContent className="p-6">
+                    <div className="h-6 bg-gradient-to-r from-muted via-muted-foreground/20 to-muted bg-[length:200%_100%] animate-[shimmer_2s_infinite] rounded mb-3"></div>
+                    <div className="h-4 bg-gradient-to-r from-muted via-muted-foreground/20 to-muted bg-[length:200%_100%] animate-[shimmer_2s_infinite] rounded mb-4 w-2/3"></div>
+                    <div className="h-8 bg-gradient-to-r from-muted via-muted-foreground/20 to-muted bg-[length:200%_100%] animate-[shimmer_2s_infinite] rounded mb-4 w-1/2"></div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="h-6 bg-gradient-to-r from-muted via-muted-foreground/20 to-muted bg-[length:200%_100%] animate-[shimmer_2s_infinite] rounded"></div>
+                      <div className="h-6 bg-gradient-to-r from-muted via-muted-foreground/20 to-muted bg-[length:200%_100%] animate-[shimmer_2s_infinite] rounded"></div>
+                      <div className="h-6 bg-gradient-to-r from-muted via-muted-foreground/20 to-muted bg-[length:200%_100%] animate-[shimmer_2s_infinite] rounded"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : featuredProperties.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 mb-8">
+                {featuredProperties.map((property, index) => (
+                  <div 
+                    key={property.id}
+                    className="animate-fade-in"
+                    style={{ 
+                      animationDelay: `${index * 0.15}s`,
+                      animationFillMode: 'both'
+                    }}
+                  >
+                    <PropertyCard 
+                      id={property.id}
+                      title={property.title}
+                      price={property.price}
+                      address={property.address}
+                      city={property.city}
+                      state={property.state}
+                      bedrooms={property.bedrooms}
+                      bathrooms={property.bathrooms}
+                      square_feet={property.square_feet}
+                      property_type={property.property_type}
+                      featured={property.featured}
+                      property_images={property.property_images}
+                    />
+                  </div>
+                ))}
+              </div>
+              {/* Show count indicator */}
+              <div className="text-center text-muted-foreground mb-8">
+                Showing {featuredProperties.length} of {allProperties.length} available properties
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-16">
+              <div className="max-w-md mx-auto">
+                <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-muted to-muted/60 rounded-full flex items-center justify-center">
+                  <MapPin className="w-12 h-12 text-primary" />
+                </div>
+                <h3 className="text-2xl font-bold text-foreground mb-4">No Properties Available</h3>
+                <p className="text-muted-foreground mb-6">We're currently updating our listings. Please check back soon for new premium properties.</p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/all-properties')}
+                  className="hover:bg-muted border-border"
+                >
+                  Browse All Properties
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          <div className="text-center mt-16">
             <Button 
               size="lg" 
-              className="px-8"
+              className="px-10 py-4 text-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
               onClick={() => navigate('/all-properties')}
             >
               View All Properties
